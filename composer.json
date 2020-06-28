@@ -1,0 +1,32 @@
+{
+	"name": "pfaciana/request-client",
+	"version": "1.0.0-alpha",
+	"description": "A Curl Request Client",
+	"keywords": [],
+	"homepage": "https://renderdev.com/",
+	"license": "GPL-2.0-only",
+	"authors": [
+		{
+			"name": "Phil Faciana",
+			"email": "phil@renderdev.com",
+			"homepage": "https://renderdev.com/",
+			"role": "Developer"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"RequestClient\\": "src/"
+		},
+		"classmap": []
+	},
+	"repositories": [],
+	"require-dev": {
+		"codeception/aspect-mock": "*",
+		"codeception/codeception": "^4",
+		"codeception/module-phpbrowser": "^1",
+		"codeception/module-asserts": "^1"
+	},
+	"require": {
+		"ext-curl": "*"
+	}
+}
