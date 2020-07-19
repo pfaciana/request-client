@@ -44,10 +44,10 @@ class CurlSessionManagerTest extends \Codeception\Test\Unit
 
 		$manager = new CurlSessionManager($urls, [], FALSE);
 
-		$this->assertEquals(6, $manager->get('threads'), 'get number of default threads');
+		$this->assertEquals(6, $manager->getThreads(), 'get number of default threads');
 
 		$manager->set('throttle', .1);
-		$this->assertEquals(.1, $manager->get('throttle'), 'get throttle time');
+		$this->assertEquals(.1, $manager->getThrottle(), 'get throttle time');
 
 		set_error_handler([$this, 'warning_handler']);
 		$this->assertFalse($manager->set('started', 10), 'make sure reserved properties are not overridden');
@@ -87,7 +87,8 @@ class CurlSessionManagerTest extends \Codeception\Test\Unit
 
 		$manager->close();
 
-		$this->assertTrue($manager->get('duration') > $micro_seconds / 1e6 * .9, 'test time');
+		$this->assertTrue($manager->getDuration() > $micro_seconds / 1e6 * .9, 'test time');
+		$this->assertTrue($manager->getEndTime() > $manager->getStartTime(), 'test time');
 	}
 
 	public function testErrors ()
@@ -123,11 +124,11 @@ class CurlSessionManagerTest extends \Codeception\Test\Unit
 
 		$manager = new CurlSessionManager($urls, ['threads' => 2]);
 
-		$this->assertEquals(0, $manager->get('started'), 'get started before start');
-		$this->assertEquals(0, $manager->get('success'), 'get success before start');
-		$this->assertEquals(0, $manager->get('failed'), 'get failed before start');
-		$this->assertEquals(0, $manager->get('completed'), 'get completed before start');
-		$this->assertEquals(count($urls), $manager->get('total'), 'get completed before start');
+		$this->assertEquals(0, $manager->getStarted(), 'get started before start');
+		$this->assertEquals(0, $manager->getSuccess(), 'get success before start');
+		$this->assertEquals(0, $manager->getFailed(), 'get failed before start');
+		$this->assertEquals(0, $manager->getCompleted(), 'get completed before start');
+		$this->assertEquals(count($urls), $manager->getTotal(), 'get completed before start');
 
 		curl_multi_setopt($mch = curl_multi_init(), CURLMOPT_MAXCONNECTS, $manager->get('threads'));
 
@@ -330,5 +331,76 @@ class CurlSessionManagerTest extends \Codeception\Test\Unit
 		$throttleTime = $throttle * (count($urls) - 1);
 
 		$this->assertTrue($manager->get('duration') > $throttleTime * .9, 'test throttle');
+	}
+
+	public function testCalculationHelpers ()
+	{
+		test::func('RequestClient', 'curl_multi_getcontent', '');
+		test::func('RequestClient', 'curl_getinfo', ['http_code' => 0, 'url' => 'https://some-site.com', 'request_header' => "\r\n",]);
+
+		$urls = [];
+		for ($i = 0; $i < 7; $i++) {
+			$urls[] = uniqid('https://some-site-') . '-url.com';
+		}
+
+		$threads  = 2;
+		$throttle = .25;
+		$manager  = new CurlSessionManager($urls, ['threads' => $threads, 'throttle' => $throttle]);
+
+		curl_multi_setopt($mch = curl_multi_init(), CURLMOPT_MAXCONNECTS, $manager->get('threads'));
+
+		$this->assertEquals(0, $manager->getItemPerSecond(), 'get item/sec before start');
+		$this->assertEquals(0, $manager->getSecondsPerItem(), 'get sec/item before start');
+		$this->assertEquals(0, $manager->getPercent(), 'get percent before start');
+		$this->assertEquals(0, $manager->getPercent(1), 'get percent w/ precision of 1 before start');
+		$this->assertEquals(0, $manager->getPercent(2, TRUE), 'get raw percent w/ precision of 2 before start');
+
+		$manager->addSessionsToGroup($mch);
+
+		$this->assertEquals(0, $manager->getItemPerSecond(), 'get item/sec after first session has started');
+		$this->assertEquals(0, $manager->getSecondsPerItem(), 'get sec/item after first session has started');
+		$this->assertEquals(0, $manager->getPercent(), 'get percent after first session has started');
+		$this->assertEquals(0, $manager->getPercent(1), 'get percent w/ precision of 1 after first session has started');
+		$this->assertEquals(0, $manager->getPercent(2, TRUE), 'get raw percent w/ precision of 2 after first session has started');
+
+		foreach ($manager->get('sessions') as $ch => $session) {
+			$manager->processSession($ch);
+		}
+		$completed = $threads * 1;
+
+		$this->assertTrue($manager->getItemPerSecond() > 1 / ($throttle * ($completed - 1) / $completed) * .9, 'get item/sec after first session');
+		$this->assertTrue($manager->getSecondsPerItem() > $throttle * ($completed - 1) / $completed * .9, 'get sec/item after first session');
+		$this->assertEquals(2 / 7 * 100, $manager->getPercent(), 'get percent after first session');
+		$this->assertEquals(28.5, $manager->getPercent(1), 'get percent w/ precision of 1 after first session');
+		$this->assertEquals(.2857, $manager->getPercent(2, TRUE), 'get raw percent w/ precision of 2 after first session');
+
+		$manager->addSessionsToGroup($mch);
+		foreach ($manager->get('sessions') as $ch => $session) {
+			$manager->processSession($ch);
+		}
+		$completed = $threads * 2;
+
+		$this->assertTrue($manager->getItemPerSecond() > 1 / ($throttle * ($completed - 1) / $completed) * .9, 'get item/sec after second session');
+		$this->assertTrue($manager->getSecondsPerItem() > $throttle * ($completed - 1) / $completed * .9, 'get sec/item after second session');
+		$this->assertEquals(4 / 7 * 100, $manager->getPercent(), 'get percent after second session');
+		$this->assertEquals(57.1, $manager->getPercent(1), 'get percent w/ precision of 1 after second session');
+		$this->assertEquals(.5714, $manager->getPercent(2, TRUE), 'get raw percent w/ precision of 2 after second session');
+
+		$manager->addSessionsToGroup($mch);
+		foreach ($manager->get('sessions') as $ch => $session) {
+			$manager->processSession($ch);
+		}
+		$manager->addSessionsToGroup($mch);
+		foreach ($manager->get('sessions') as $ch => $session) {
+			$manager->processSession($ch);
+		}
+		$completed = count($urls);
+
+		$this->assertTrue($manager->getItemPerSecond() > 1 / ($throttle * ($completed - 1) / $completed) * .9, 'get item/sec after second session');
+		$this->assertTrue($manager->getSecondsPerItem() > $throttle * ($completed - 1) / $completed * .9, 'get sec/item after second session');
+		$this->assertEquals(100, $manager->getPercent(), 'get percent after second session');
+		$this->assertEquals(100, $manager->getPercent(1), 'get percent w/ precision of 1 after second session');
+		$this->assertEquals(1, $manager->getPercent(2, TRUE), 'get raw percent w/ precision of 2 after second session');
+
 	}
 }

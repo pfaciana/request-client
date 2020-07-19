@@ -4,10 +4,11 @@
 namespace RequestClient;
 
 use RequestClient\Request\CurlOptionsTrait;
+use RequestClient\Request\StatusHelpersTrait;
 
 class CurlSessionManager
 {
-	use CurlOptionsTrait;
+	use CurlOptionsTrait, StatusHelpersTrait;
 
 	protected $reservedProperties = ['total', 'urls', 'sessions', 'errors', 'started', 'success', 'failed', 'completed', 'startTime', 'endTime', 'duration'];
 
