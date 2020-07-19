@@ -27,6 +27,8 @@
 		"codeception/module-asserts": "^1"
 	},
 	"require": {
-		"ext-curl": "*"
+		"ext-curl": "*",
+		"ext-json": "*",
+		"jakeasmith/http_build_url": "^1"
 	}
 }
