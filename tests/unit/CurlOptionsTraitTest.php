@@ -70,4 +70,27 @@ class CurlOptionsTraitTest extends \Codeception\Test\Unit
 		$this->assertFalse($mock->setCurlOptions('not an array'), 'param is not an array');
 		restore_error_handler();
 	}
+
+	public function testSetCurlOption ()
+	{
+		/** @var CurlOptionsTrait $mock */
+		$mock = $this->getMockForTrait(CurlOptionsTrait::class);
+
+		$options = $mock->setCurlOption(CURLOPT_URL, 'https://some-url.com');
+		$this->assertEquals('https://some-url.com', $options[CURLOPT_URL], 'add url');
+		$this->assertCount(1, $options, 'merge should only have 1 item');
+
+	}
+
+	public function testGetCurlConstant ()
+	{
+		/** @var CurlOptionsTrait $mock */
+		$mock = $this->getMockForTrait(CurlOptionsTrait::class);
+
+		$this->assertEquals('CURLOPT_URL', $mock->getCurlConstant(CURLOPT_URL), 'match constant');
+		$this->assertEquals('CURLE_UNSUPPORTED_PROTOCOL', $mock->getCurlConstant(CURLAUTH_BASIC), 'match first constant');
+		$this->assertEquals('CURLAUTH_BASIC', $mock->getCurlConstant(CURLAUTH_BASIC, 'CURLAUTH_'), 'match constant with prefix');
+		$this->assertEquals('UNKNOWN_CONSTANT', $mock->getCurlConstant(1234567890), 'constant not found');
+
+	}
 }
