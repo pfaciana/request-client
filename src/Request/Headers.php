@@ -10,9 +10,10 @@ class Headers
 
 	protected $lineDelimiter = "\r\n";
 
-	public function __construct ($headers = '')
+	public function __construct ($headers = '', $lineDelimiter = "\r\n")
 	{
 		$this->setHeaders($headers);
+		!empty($lineDelimiter) && ($this->lineDelimiter = $lineDelimiter);
 	}
 
 	public function setHeaders ($headers)
