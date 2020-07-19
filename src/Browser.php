@@ -15,6 +15,7 @@ abstract class Browser
 	protected $response;
 	protected $cookies;
 	protected $url;
+	protected $origUrl;
 	protected $statusCode;
 
 	public function getRequest ()
@@ -55,6 +56,11 @@ abstract class Browser
 	public function getUrl ()
 	{
 		return $this->url;
+	}
+
+	public function getOrigUrl ()
+	{
+		return $this->origUrl;
 	}
 
 	public function getCookies ()
