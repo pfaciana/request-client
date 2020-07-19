@@ -4,6 +4,9 @@
 # ignore dependency directories
 vendor/
 
+# ignore tests cache
+tests/_data/cache
+
 # ignore log files and databases
 *.log
 *.sql
