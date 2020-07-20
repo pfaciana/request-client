@@ -219,4 +219,43 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 
 		$this->assertEquals('{"key1":"value1","key2":"value2"}', $curl->getRequest(), 'json data is serialized and sent as the request');
 	}
+
+	public function testSuccessFailedRequest ()
+	{
+		test::func('RequestClient', 'curl_getinfo', ['http_code' => 200, 'url' => 'https://some-site.com', 'request_header' => "\r\n",]);
+		test::func('RequestClient', 'curl_exec', 'some response');
+
+		$domain = 'some-domain.com';
+		$path   = '/dir';
+		$url    = 'https://' . $domain . $path;
+
+		$curl = new CurlSession();
+		$curl->init($url);
+
+		$this->assertFalse($curl->requestSucceeded(), 'request has not succeeded because it hasnt started');
+		$this->assertFalse($curl->requestFailed(), 'request has not failed because it hasnt started');
+
+		$curl->exec();
+
+		$this->assertTrue($curl->requestSucceeded(), '200 request was successful');
+		$this->assertFalse($curl->requestFailed(), '200 request did not fail');
+
+		test::func('RequestClient', 'curl_getinfo', ['http_code' => 404, 'url' => 'https://some-site.com', 'request_header' => "\r\n",]);
+		test::func('RequestClient', 'curl_exec', '');
+
+		$curl = new CurlSession();
+		$curl->init($url)->exec();
+
+		$this->assertFalse($curl->requestSucceeded(), '404 request was not successful');
+		$this->assertTrue($curl->requestFailed(), '404 request failed');
+
+		test::func('RequestClient', 'curl_getinfo', ['http_code' => 0, 'url' => 'https://some-site.com', 'request_header' => "\r\n",]);
+		test::func('RequestClient', 'curl_exec', '');
+
+		$curl = new CurlSession();
+		$curl->init($url)->exec();
+
+		$this->assertFalse($curl->requestSucceeded(), '0 request was not successful');
+		$this->assertTrue($curl->requestFailed(), '0 request failed');
+	}
 }

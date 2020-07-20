@@ -53,6 +53,16 @@ abstract class Browser
 		return $this->statusCode;
 	}
 
+	public function requestSucceeded ()
+	{
+		return $this->statusCode > 0 && $this->statusCode < 400;
+	}
+
+	public function requestFailed ()
+	{
+		return !is_null($this->statusCode) && !$this->requestSucceeded();
+	}
+
 	public function getUrl ()
 	{
 		return $this->url;
