@@ -113,7 +113,7 @@ class CurlBrowserOptions
 			$query = http_build_query($query);
 		}
 
-		$this->options['url'] = http_build_url($this->options['url'], ['query' => $query], HTTP_URL_JOIN_QUERY);
+		$this->options['curl'][CURLOPT_URL] = $this->options['url'] = http_build_url($this->options['url'], ['query' => $query], HTTP_URL_JOIN_QUERY);
 	}
 
 	protected function setBody ()

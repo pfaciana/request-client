@@ -52,6 +52,8 @@ class CurlSession extends CurlBrowser
 
 		curl_setopt_array($this->ch, $curlOptions);
 
+		$this->url = $curlOptions[CURLOPT_URL] ?? $options['url'];
+
 		if (array_key_exists(CURLOPT_POSTFIELDS, $curlOptions)) {
 			$this->request = $curlOptions[CURLOPT_POSTFIELDS];
 		}
@@ -65,7 +67,7 @@ class CurlSession extends CurlBrowser
 
 		$this->getInfo = curl_getinfo($this->ch);
 
-		$this->url = $this->getInfo['url'] ?: $this->origUrl;
+		$this->url = !empty($this->getInfo['url']) ? $this->getInfo['url'] : $this->url;
 
 		if (empty($this->statusCode = $this->getInfo['http_code']) && empty($this->response)) {
 			$this->response = FALSE;

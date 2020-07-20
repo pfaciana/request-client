@@ -187,7 +187,6 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 
 		$getInfo = [
 			'http_code'      => 200,
-			'url'            => $url,
 			'request_header' => "GET {$path} HTTP/2\r\nHost: {$domain}\r\n\r\n\r\n",
 		];
 		test::func('RequestClient', 'curl_getinfo', $getInfo);
@@ -217,6 +216,8 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 		$this->assertTrue(in_array('Authorization: Bearer some_token', $curlOptions[CURLOPT_HTTPHEADER]), '$curlOptions: Authorization');
 		$this->assertTrue(in_array('Content-Type: application/json', $curlOptions[CURLOPT_HTTPHEADER]), '$curlOptions: Content-Type');
 
+		$this->assertEquals('https://some-domain.com/dir?a=1&b=two#hash', $curl->getOrigUrl(), 'check original url');
+		$this->assertEquals('https://some-domain.com/dir?a=1&b=2&c=3#hash', $curl->getUrl(), 'check url used for the request');
 		$this->assertEquals('{"key1":"value1","key2":"value2"}', $curl->getRequest(), 'json data is serialized and sent as the request');
 	}
 
