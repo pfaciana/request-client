@@ -4,6 +4,7 @@
 namespace RequestClient;
 
 use RequestClient\Request\UserAgentTrait;
+use Minifier\TinyMinify;
 
 abstract class Browser
 {
@@ -81,5 +82,19 @@ abstract class Browser
 	public function getCookie ($key, $path = NULL, $domain = NULL)
 	{
 		return $this->cookies->get(...func_get_args());
+	}
+
+	public function minifyResponse ()
+	{
+		return $this->minify(NULL, TRUE);
+	}
+
+	public function minify ($html = NULL, $save = FALSE)
+	{
+		$html = TinyMinify::html($html ?: $this->response);
+
+		$save && ($this->response = $html);
+
+		return $html;
 	}
 }

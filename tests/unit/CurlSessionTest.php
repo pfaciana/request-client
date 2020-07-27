@@ -259,4 +259,68 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 		$this->assertFalse($curl->requestSucceeded(), '0 request was not successful');
 		$this->assertTrue($curl->requestFailed(), '0 request failed');
 	}
+
+	public function testMinify ()
+	{
+		$input  = ' <body class="body">
+
+<div class="main-wrap">
+    <main>
+        <textarea>
+            Some text
+            with newlines
+            and some spaces
+        </textarea>
+
+        <div class="test">
+            <p>This text</p>
+            <p>should not</p>
+            <p>wrap on multiple lines</p>
+        </div>
+    </main>
+</div>
+<script>
+    console.log(\'Script tags are not minified\');
+    console.log(\'This is inside a script tag\');
+</script></body>';
+		$output = '<body class="body"><div class="main-wrap"> <main> <textarea>
+            Some text
+            with newlines
+            and some spaces
+        </textarea> <div class="test"> <p>This text</p> <p>should not</p> <p>wrap on multiple lines</p> </div> </main> </div> <script>
+    console.log(\'Script tags are not minified\');
+    console.log(\'This is inside a script tag\');
+</script></body>';
+
+		test::func('RequestClient', 'curl_getinfo', ['http_code' => 200, 'url' => 'https://some-site.com', 'request_header' => "\r\n",]);
+		test::func('RequestClient', 'curl_exec', $input);
+
+		$domain = 'some-domain.com';
+		$path   = '/dir';
+		$url    = 'https://' . $domain . $path;
+
+		$curl = new CurlSession();
+		$curl->init($url);
+		$curl->exec();
+
+		$this->assertEquals($output, $curl->minify(), 'minified response');
+		$this->assertEquals($input, $curl->getResponse(), 'response unchanged');
+		$curl->minifyResponse();
+		$this->assertEquals($output, $curl->getResponse(), 'response minified');
+
+
+		$curl = new CurlSession();
+		$curl->init($url, ['minify' => TRUE]);
+		$curl->exec();
+		$this->assertEquals($output, $curl->getResponse(), 'response minified via options');
+
+
+		$input  = '       <div class="a">
+            <p>b</p>
+        </div>      ';
+		$output = '<div class="a"> <p>b</p> </div> ';
+
+		$this->assertEquals($output, $curl->minify($input), 'minified input');
+
+	}
 }

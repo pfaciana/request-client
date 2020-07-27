@@ -1,6 +1,6 @@
 {
 	"name": "pfaciana/request-client",
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"description": "A Curl Request Client",
 	"keywords": [],
 	"homepage": "https://renderdev.com/",
@@ -29,6 +29,7 @@
 	"require": {
 		"ext-curl": "*",
 		"ext-json": "*",
-		"jakeasmith/http_build_url": "^1"
+		"jakeasmith/http_build_url": "^1",
+		"pfaciana/tiny-html-minifier": "^3"
 	}
 }
