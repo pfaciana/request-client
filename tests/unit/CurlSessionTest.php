@@ -307,6 +307,11 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 		$this->assertEquals($input, $curl->getResponse(), 'response unchanged');
 		$curl->minifyResponse();
 		$this->assertEquals($output, $curl->getResponse(), 'response minified');
+		$this->assertEquals(1, $curl->minify(1), 'return invalid argument');
+
+		$curl->setQp('<b>change the html</b>');
+		$this->assertCount(0, $curl->query(NULL, 'textarea'), 'there should be no textarea after changing $qp');
+		$this->assertCount(1, $curl->query(NULL, 'textarea', ['reset' => TRUE]), 'reset back to the original response');
 
 
 		$curl = new CurlSession();
