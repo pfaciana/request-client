@@ -327,5 +327,30 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 
 		$this->assertEquals($output, $curl->minify($input), 'minified input');
 
+
+		$json = [
+			'a' => TRUE,
+			'b' => 'two',
+			'c' => [1, 2, 3],
+		];
+
+		$json_alt = [
+			'x' => FALSE,
+			'y' => 'five',
+			'z' => [-1, -2, -3],
+		];
+
+		test::func('RequestClient', 'curl_exec', json_encode($json));
+
+		$curl = new CurlSession();
+		$curl->init($url);
+		$curl->exec();
+
+		$this->assertEquals('two', $curl->queryJson('b'), 'initial json query');
+		$this->assertEquals(-1, $curl->queryJson($json_alt, 'z[0]'), 'query alt json, but dont save');
+		$this->assertEquals(2, $curl->queryJson('c[1]'), 'check alt query was not saved');
+		$this->assertEquals(-2, $curl->queryJson($json_alt, 'z[1]', ['reset' => TRUE]), 'query alt and save');
+		$this->assertEquals(-3, $curl->queryJson($json_alt, 'z[2]'), 'check alt query was saved');
+
 	}
 }

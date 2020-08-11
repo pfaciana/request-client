@@ -1,7 +1,5 @@
 <?php
 
-use \AspectMock\Test as test;
-
 $kernel = \AspectMock\Kernel::getInstance();
 $kernel->init([
 	              'debug'              => TRUE,

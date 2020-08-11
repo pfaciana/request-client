@@ -4,11 +4,13 @@
 namespace RequestClient\Request;
 
 use DOMXPath;
+use JmesPath;
 use Minifier\TinyMinify;
 
 trait QueryTrait
 {
 	protected $qp;
+	protected $json;
 	protected $response;
 
 	abstract public function getResponse ();
@@ -92,7 +94,13 @@ trait QueryTrait
 		return html5qp($qp, $selector, $options);
 	}
 
-	public function query ($document = NULL, $selector = NULL, $options = [])
+	/* Legacy for v1.3.0 */
+	public function query ()
+	{
+		return $this->queryHtml(...func_get_args());
+	}
+
+	public function queryHtml ($document = NULL, $selector = NULL, $options = [])
 	{
 		if (func_num_args() > 0 && func_num_args() < 3) {
 			list($document, $selector, $options) = $this->normalizeQueryArgs(func_get_args());
@@ -123,7 +131,7 @@ trait QueryTrait
 
 	public function jQuery ($selector, $context = NULL, $options = [])
 	{
-		return $this->query($context, $selector, $options);
+		return $this->queryHtml($context, $selector, $options);
 	}
 
 	public function xPath ($selector, $context = NULL, $options = [])
@@ -135,7 +143,7 @@ trait QueryTrait
 		}
 
 		foreach ($context as $document) {
-			$qp = $this->query($document, NULL, $options);
+			$qp = $this->queryHtml($document, NULL, $options);
 
 			$doc = new \DomDocument;
 
@@ -160,5 +168,67 @@ trait QueryTrait
 		}
 
 		return $DOMNodeList;
+	}
+
+	public function getJson ()
+	{
+		return $this->json;
+	}
+
+	public function setJson ($document = NULL, $options = [])
+	{
+		return $this->json = $this->processJson($document, $options);
+	}
+
+	protected function processJson ($document = NULL, $options = [])
+	{
+		$options += ['assoc' => TRUE, 'depth' => 512, 'bitmask' => 0, 'callback' => NULL];
+
+		if (is_callable($options['callback'])) {
+			$document = call_user_func($options['callback'], $document, $options, $this);
+		}
+
+		if (is_scalar($document)) {
+			$document = json_decode($document, $options['assoc'], $options['depth'], $options['bitmask']);
+		}
+
+		return $document;
+	}
+
+	public function queryJson ($document = NULL, $selector = NULL, $options = [])
+	{
+		if (func_num_args() > 0 && func_num_args() < 3) {
+			list($document, $selector, $options) = $this->normalizeQueryArgs(func_get_args());
+		}
+
+		$options += ['reset' => FALSE];
+
+		if (is_null($document)) {
+			if (empty($this->json) || $options['reset']) {
+				$json = $this->getResponse();
+			}
+			else {
+				$json = $this->json;
+			}
+		}
+		else {
+			$json = $document;
+		}
+
+		if (empty($this->json) || $options['reset']) {
+			$json = $this->setJson($json, $options);
+		}
+		else {
+			$json = $this->processJson($json, $options);
+		}
+
+		$result = JmesPath\Env::search($selector, $json);
+
+		return $result;
+	}
+
+	public function jPath ($selector, $context = NULL, $options = [])
+	{
+		return $this->queryJson($context, $selector, $options);
 	}
 }

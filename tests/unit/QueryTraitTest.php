@@ -202,6 +202,59 @@ class QueryTraitTest extends \Codeception\Test\Unit
 		$this->assertCount(4, $mock->xPath('//div//*[starts-with(name(), "p")]'), 'nested query is same as test above');
 	}
 
+	public function testJson ()
+	{
+		/** @var QueryTrait $mock */
+		$mock = $this->getMockForTrait(QueryTrait::class);
+
+		$d = (object) [
+			'a' => 1,
+			'b' => [
+				'b2a' => 'some value',
+				'b2b' => (object) [
+					'b3a' => TRUE,
+					'b3b' => FALSE,
+				],
+				'b2c' => ['1.234', '5.678', 90],
+			],
+			'd' => '0',
+			'c' => NULL,
+		];
+
+		$this->assertEquals('5.678', $mock->queryJson(json_encode($d), 'b.b2c[1]'), 'set and query response');
+		$this->assertTrue($mock->jPath('b.b2b.b3a'), 'query response');
+		$this->assertEquals(json_decode(json_encode($d), TRUE), $mock->getJson(), 'check response was saved');
+
+
+		$d = [
+			'foo' => 'bar',
+			'baz' => 'boom',
+			'cow' => 'milk',
+			'php' => 'hypertext processor',
+		];
+
+		$callback = function ($document, $options, $client) {
+			parse_str($document, $output);
+
+			return $output;
+		};
+
+		$mock->setJson(http_build_query($d), ['callback' => $callback]);
+
+		$this->assertEquals(json_decode(json_encode($d), TRUE), $mock->getJson(), 'check that json ran through the callback');
+
+		$d = [
+			'a' => TRUE,
+			'b' => 'two',
+			'c' => [1, 2, 3],
+		];
+
+		$this->assertTrue($mock->jPath('a', $d), 'query custom json');
+		$this->assertEquals('bar', $mock->jPath('foo'), 'make sure the old json is still saved');
+		$mock->setJson($d, ['reset' => TRUE]);
+		$this->assertTrue($mock->jPath('a'), 'check to make sure the new json is saved');
+	}
+
 	public function testMiscQuery ()
 	{
 		/** @var QueryTrait $mock */
@@ -227,7 +280,7 @@ class QueryTraitTest extends \Codeception\Test\Unit
 
 		$mock->setQp($d);
 
-		$this->assertCount(2, $mock->query(NULL, '.item'), 'just selector against existing $qp');
-		$this->assertCount(2, $mock->query('.item'), 'shorthand selector');
+		$this->assertCount(2, $mock->queryHtml(NULL, '.item'), 'just selector against existing $qp');
+		$this->assertCount(2, $mock->queryHtml('.item'), 'shorthand selector');
 	}
 }
