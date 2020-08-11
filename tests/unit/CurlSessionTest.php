@@ -352,5 +352,28 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 		$this->assertEquals(-2, $curl->queryJson($json_alt, 'z[1]', ['reset' => TRUE]), 'query alt and save');
 		$this->assertEquals(-3, $curl->queryJson($json_alt, 'z[2]'), 'check alt query was saved');
 
+		$json = [
+			'foo' => 'bar',
+			'baz' => 'boom',
+			'cow' => 'milk',
+			'php' => 'hypertext processor',
+		];
+
+		test::func('RequestClient', 'curl_exec', http_build_query($json));
+
+		$callback = function ($json, $options, $client) {
+			parse_str($json, $output);
+
+			return json_encode(['query' => $output]);
+		};
+
+		$curl = new CurlSession();
+		$curl->init($url);
+		$curl->exec();
+
+		$curl->filterJson($callback);
+
+		$this->assertEquals('bar', $curl->jPath('query.foo'), 'check that json ran through the callback');
+
 	}
 }

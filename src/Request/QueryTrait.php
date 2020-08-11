@@ -180,8 +180,15 @@ trait QueryTrait
 		return $this->json = $this->processJson($document, $options);
 	}
 
+	public function filterJson ($callback, $options = [])
+	{
+		return $this->setJson(NULL, ['callback' => $callback] + $options);
+	}
+
 	protected function processJson ($document = NULL, $options = [])
 	{
+		$document = $document ?? $this->getResponse();
+
 		$options += ['assoc' => TRUE, 'depth' => 512, 'bitmask' => 0, 'callback' => NULL];
 
 		if (is_callable($options['callback'])) {
