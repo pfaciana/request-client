@@ -37,7 +37,7 @@ class CookieJar
 
 	public function get ($key, $path = NULL, $domain = NULL)
 	{
-		$path ??= '/';
+		$path = $path ?? '/';
 
 		$this->flushExpiredCookies();
 
@@ -64,7 +64,7 @@ class CookieJar
 
 	public function expire ($name, $path = NULL, $domain = NULL)
 	{
-		$path    ??= '/';
+		$path    = $path ?? '/';
 		$domains = !$domain ? array_keys($this->cookieJar) : [$domain];
 
 		foreach ($domains as $domain) {
