@@ -147,6 +147,30 @@ class OptionsTest extends \Codeception\Test\Unit
 		$this->assertTrue(in_array('Content-Type: application/json', $curl[CURLOPT_HTTPHEADER]), 'application/json');
 	}
 
+	public function testSetHeaders ()
+	{
+		$browserOptions = ['headers' => ['a' => 1, 'b' => '2', 'some-key: Some Value String']];
+
+		$options = new CurlBrowserOptions($browserOptions);
+
+		$normalizedBrowserOptions = $options->getAll();
+
+		$this->assertEquals(['curl'], array_keys($normalizedBrowserOptions), 'match keys');
+		$curl = $normalizedBrowserOptions['curl'];
+		$this->assertTrue(in_array('a: 1', $curl[CURLOPT_HTTPHEADER]), 'array header');
+		$this->assertTrue(in_array('some-key: Some Value String', $curl[CURLOPT_HTTPHEADER]), 'string header');
+
+
+		$browserOptions = ['headers' => 'some-key-2: Some Other String'];
+
+		$options = new CurlBrowserOptions($browserOptions);
+
+		$normalizedBrowserOptions = $options->getAll();
+
+		$this->assertEquals(['curl'], array_keys($normalizedBrowserOptions), 'match keys');
+		$curl = $normalizedBrowserOptions['curl'];
+		$this->assertTrue(in_array('some-key-2: Some Other String', $curl[CURLOPT_HTTPHEADER]), 'single string header input');
+	}
 
 	public function testSetProxy ()
 	{

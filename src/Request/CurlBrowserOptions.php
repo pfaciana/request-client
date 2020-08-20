@@ -9,7 +9,7 @@ class CurlBrowserOptions
 	use CurlProxyTrait;
 
 	protected $options = [];
-	protected $headers = [
+	protected $requestHeaders = [
 		"Connection: keep-alive",
 		"Keep-Alive: 300",
 		"Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7",
@@ -60,13 +60,13 @@ class CurlBrowserOptions
 	{
 		if (array_key_exists('auth_basic', $this->options)) {
 			$this->removeHeader('Authorization');
-			$this->headers[] = 'Authorization: Basic ' . base64_encode($this->options['auth_basic']);
+			$this->requestHeaders[] = 'Authorization: Basic ' . base64_encode($this->options['auth_basic']);
 			unset($this->options['auth_basic']);
 		}
 
 		if (array_key_exists('auth_bearer', $this->options)) {
 			$this->removeHeader('Authorization');
-			$this->headers[] = 'Authorization: Bearer ' . $this->options['auth_bearer'];
+			$this->requestHeaders[] = 'Authorization: Bearer ' . $this->options['auth_bearer'];
 			unset($this->options['auth_bearer']);
 		}
 	}
@@ -136,11 +136,11 @@ class CurlBrowserOptions
 
 		switch ($type) {
 			case 'form':
-				$this->headers[] = 'Content-Type: application/x-www-form-urlencoded';
+				$this->requestHeaders[] = 'Content-Type: application/x-www-form-urlencoded';
 				!is_string($body) && ($body = http_build_query($body, '', '&', PHP_QUERY_RFC1738));
 				break;
 			case 'json':
-				$this->headers[] = 'Content-Type: application/json';
+				$this->requestHeaders[] = 'Content-Type: application/json';
 				!is_string($body) && ($body = json_encode($body, \PHP_VERSION_ID >= 70300 ? JSON_THROW_ON_ERROR : 0));
 				break;
 		}
@@ -161,20 +161,38 @@ class CurlBrowserOptions
 
 	protected function setHeaders ()
 	{
-		$this->options['curl'][CURLOPT_HTTPHEADER] = $this->headers;
+		$this->processUserHeaders();
+
+		$this->options['curl'][CURLOPT_HTTPHEADER] = $this->requestHeaders;
 	}
 
 	protected function removeHeader ($key)
 	{
 		$remove = [];
 
-		foreach ($this->headers as $index => $header) {
+		foreach ($this->requestHeaders as $index => $header) {
 			list($name, $value) = explode(':', $header);
 			if (strtolower($name) === strtolower($key)) {
 				$remove[] = $header;
 			}
 		}
 
-		$this->headers = array_diff($this->headers, $remove);
+		$this->requestHeaders = array_diff($this->requestHeaders, $remove);
+	}
+
+	protected function processUserHeaders ()
+	{
+		if (!array_key_exists('headers', $this->options)) {
+			return;
+		}
+
+		$headers = (array) $this->options['headers'];
+
+		foreach ($headers as $key => $header) {
+			$this->requestHeaders[] = (!is_int($key) ? "{$key}: " : '') . $header;
+		}
+
+
+		unset($this->options['headers']);
 	}
 }
