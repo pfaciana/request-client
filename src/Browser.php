@@ -55,6 +55,11 @@ abstract class Browser
 		return $this->statusCode;
 	}
 
+	public function requestSent ()
+	{
+		return !is_null($this->statusCode);
+	}
+
 	public function requestSucceeded ()
 	{
 		return $this->statusCode > 0 && $this->statusCode < 400;
