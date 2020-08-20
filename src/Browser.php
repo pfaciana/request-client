@@ -5,10 +5,11 @@ namespace RequestClient;
 
 use RequestClient\Request\UserAgentTrait;
 use RequestClient\Request\QueryTrait;
+use RequestClient\Request\EnvironmentTrait;
 
 abstract class Browser
 {
-	use UserAgentTrait, QueryTrait;
+	use UserAgentTrait, QueryTrait, EnvironmentTrait;
 
 	protected $requestHeader;
 	protected $responseHeader;
