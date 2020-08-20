@@ -83,12 +83,12 @@ trait QueryTrait
 
 	protected function processQp ($qp = NULL, $selector = NULL, $options = [])
 	{
-		if (function_exists('tidy_repair_string') && is_string($qp)) {
-			$qp = tidy_repair_string($qp);
-		}
-
 		if (isset($options['use_parser']) && $options['use_parser'] === 'xml') {
 			return qp($qp, $selector, $options);
+		}
+
+		if (function_exists('tidy_repair_string') && is_string($qp)) {
+			$qp = tidy_repair_string($qp);
 		}
 
 		return html5qp($qp, $selector, $options);

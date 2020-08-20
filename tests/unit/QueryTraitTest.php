@@ -85,7 +85,7 @@ class QueryTraitTest extends \Codeception\Test\Unit
 		$o = ['use_parser' => 'xml'];
 
 		$this->assertEquals(html5qp(tidy_repair_string($d))->html(), $mock->setQp($d)->html(), 'As HTML5');
-		$this->assertEquals(qp(tidy_repair_string($d), NULL, $o)->xml(), $mock->setQp($d, $o)->xml(), 'As XML');
+		$this->assertEquals(qp($d, NULL, $o)->xml(), $mock->setQp($d, $o)->xml(), 'As XML');
 
 		$qp = $mock->setQp($d);
 		$this->assertEquals($qp, $mock->getQp(), 'get $qp');
