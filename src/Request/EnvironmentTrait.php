@@ -25,4 +25,12 @@ trait EnvironmentTrait
 
 		return $output;
 	}
+
+	public function getIP ($skipTor = FALSE)
+	{
+		$torify = !$skipTor && $this->isTorEnabled() ? 'torify' : '';
+		$wsl    = $this->isWindows() ? 'wsl' : '';
+
+		return exec("{$wsl} {$torify} curl ifconfig.me 2>&1");
+	}
 }
