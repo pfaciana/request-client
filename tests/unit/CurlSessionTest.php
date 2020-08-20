@@ -233,11 +233,13 @@ set-cookie: cookie_two=value2; expires=Sat, 4-Jan-2020 20:34:33 GMT; path={$path
 		$curl = new CurlSession();
 		$curl->init($url);
 
+		$this->assertFalse($curl->requestSent(), 'request has not started');
 		$this->assertFalse($curl->requestSucceeded(), 'request has not succeeded because it hasnt started');
 		$this->assertFalse($curl->requestFailed(), 'request has not failed because it hasnt started');
 
 		$curl->exec();
 
+		$this->assertTrue($curl->requestSent(), 'request has started');
 		$this->assertTrue($curl->requestSucceeded(), '200 request was successful');
 		$this->assertFalse($curl->requestFailed(), '200 request did not fail');
 
