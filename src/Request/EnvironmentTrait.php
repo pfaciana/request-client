@@ -13,13 +13,16 @@ trait EnvironmentTrait
 
 	public function isTorEnabled ()
 	{
-		$command = $this->isWindows() ? 'netstat -aon | findstr ":9050"' : 'ps aux | grep -w [t]or';
+		$command = $this->isWindows() ? 'netstat -aon | findstr ":9050" | findstr "LISTENING"' : 'ps aux | grep -w [t]or';
 
 		return !empty(exec($command));
 	}
 
 	public function restartTor ()
 	{
-		return !$this->isWindows() && $this->isTorEnabled() && exec('service tor restart') && (sleep(3) === 0);
+		$output = shell_exec(($this->isWindows() ? 'wsl ' : '') . 'sudo service tor restart');
+		sleep(3);
+
+		return $output;
 	}
 }
