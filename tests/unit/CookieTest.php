@@ -51,6 +51,7 @@ class CookieTest extends \Codeception\Test\Unit
 		$cookieStr = 'cookieKey=cookieValue;Expires=Mon, 04 Jan 2021 07:23:00 GMT;Domain=some-site.com;Path=/docs;SameSite=Strict;Secure;HttpOnly';
 		$cookie    = new Cookie($cookieStr);
 
+		$this->assertEquals('Mon, 04 Jan 2021 07:23:00 GMT', $cookie->getParam('expires'), 'get expires');
 		$this->assertEquals(1609744980, $cookie->getParam('expires', TRUE), 'get expires');
 		$this->assertEquals('some-site.com', $cookie->getParam('Domain'), 'get Domain');
 		$this->assertTrue($cookie->getParam('Secure'), 'get Secure');
@@ -72,14 +73,14 @@ class CookieTest extends \Codeception\Test\Unit
 		$this->assertEquals('/', $cookie->getParam('path'), 'get default path');
 
 		$cookie = new Cookie('cookieKey=cookieValue');
-		$this->assertEquals(NULL, $cookie->getParam('domain'), 'get empty domain');
+		$this->assertNull($cookie->getParam('domain'), 'get empty domain');
 
 		$cookieArr = [
 			'cookieKey' => 'cookieValue',
 			'HttpOnly'  => NULL,
 		];
 		$cookie    = new Cookie($cookieArr);
-		$this->assertEquals(NULL, $cookie->getParam('HttpOnly'), 'get null set HttpOnly');
+		$this->assertNull($cookie->getParam('HttpOnly'), 'get null set HttpOnly');
 	}
 
 	public function testSetParam ()
@@ -162,10 +163,10 @@ class CookieTest extends \Codeception\Test\Unit
 			'Path'      => '/docs',
 			'SameSite'  => 'Strict',
 			'Secure'    => TRUE,
-			'HttpOnly'  => TRUE,
 		];
 		$cookie    = new Cookie($cookieArr);
 		$this->assertEquals('cookieKey=cookieValue;Expires=Mon, 04 Jan 2021 07:23:00 GMT', $cookie->getFullCookie(';', ['expires']), 'check cookie parts');
+		$this->assertEquals('cookieKey=cookieValue', $cookie->getFullCookie(';', ['HttpOnly']), 'check HttpOnly does not get returned');
 	}
 
 	public function testOverrideExpires ()
@@ -182,10 +183,12 @@ class CookieTest extends \Codeception\Test\Unit
 		];
 		$cookie    = new Cookie($cookieArr);
 
-		$cookie->setParam('expires', 'Mon, 4 Jan 2021 07:23:00 GMT', TRUE);
+		$this->assertEquals('cookieKey=cookieValue;Expires=Mon, 04 Jan 2021 07:23:00 GMT', $cookie->getFullCookie(';', ['expires']), 'check cookie parts');
+
+		$cookie->setParam('expires', 'Mon, 6 Jan 2121 07:23:00 GMT');
 		$cookie->setParam('Secure', FALSE);
 
-		$this->assertEquals('cookieKey=cookieValue;Expires=Mon, 04 Jan 2021 07:23:00 GMT', $cookie->getFullCookie(';', ['expires']), 'check cookie parts');
+		$this->assertEquals('cookieKey=cookieValue;Expires=Mon, 06 Jan 2121 07:23:00 GMT', $cookie->getFullCookie(';', ['expires']), 'check cookie parts');
 	}
 
 	public function testIsExpired ()
@@ -193,7 +196,7 @@ class CookieTest extends \Codeception\Test\Unit
 		$cookie = new Cookie('cookieKey=cookieValue');
 		$this->assertFalse($cookie->isExpired(), 'cookie without expire date');
 
-		$cookie = new Cookie('cookieKey=cookieValue;Expires=Mon, 04 Jan 2021 07:23:00 GMT;');
+		$cookie = new Cookie('cookieKey=cookieValue;Expires=Mon, 04 Jan 2121 07:23:00 GMT;');
 		$this->assertFalse($cookie->isExpired(), 'not expired cookie');
 
 		$cookie = new Cookie('cookieKey=cookieValue;Expires=Wed, 1 Jan 2020 07:23:00 GMT');
