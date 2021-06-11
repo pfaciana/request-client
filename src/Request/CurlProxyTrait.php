@@ -17,6 +17,10 @@ trait CurlProxyTrait
 
 	public function setCurlProxy ($settings)
 	{
+		if (empty($settings)) {
+			return;
+		}
+
 		foreach ($this->curlProxyKeys as $proxyKey) {
 			unset($this->options['curl'][$proxyKey]);
 		}
@@ -43,6 +47,27 @@ trait CurlProxyTrait
 					CURLOPT_HTTPPROXYTUNNEL => 1,
 					CURLOPT_PROXY           => $settings['host'] . ':' . $settings['port'],
 					CURLOPT_PROXYUSERPWD    => $settings['username'] . ':' . $settings['password'],
+				] + $this->options['curl'];
+		}
+		elseif ($settings['type'] === 'nordvpn') {
+			foreach ($this->curlProxyKeys as $proxyKey) {
+				unset($this->options['curl'][$proxyKey]);
+			}
+
+			/* ie.socks.nordhold.net, dublin.ie.socks.nordhold.net
+			 * nl.socks.nordhold.net, amsterdam.nl.socks.nordhold.net
+			 * se.socks.nordhold.net, stockholm.se.socks.nordhold.net
+			 * us.socks.nordhold.net, atlanta.us.socks.nordhold.net, dallas.us.socks.nordhold.net, los-angeles.us.socks.nordhold.net
+			 */
+			$settings += ['host' => 'us.socks.nordhold.net', 'port' => '1080'];
+
+			$this->options['curl'] = [
+					CURLOPT_HTTPPROXYTUNNEL => 1,
+					CURLOPT_PROXY           => $settings['host'],
+					CURLOPT_PROXYPORT       => $settings['port'],
+					CURLOPT_PROXYUSERPWD    => $settings['username'] . ':' . $settings['password'],
+					CURLOPT_PROXYTYPE       => CURLPROXY_SOCKS5,
+					CURLOPT_PROXYAUTH       => CURLAUTH_BASIC,
 				] + $this->options['curl'];
 		}
 	}
