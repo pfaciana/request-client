@@ -103,7 +103,7 @@ trait QueryTrait
 	public function queryHtml ($document = NULL, $selector = NULL, $options = [])
 	{
 		if (func_num_args() > 0 && func_num_args() < 3) {
-			list($document, $selector, $options) = $this->normalizeQueryArgs(func_get_args());
+			[$document, $selector, $options] = $this->normalizeQueryArgs(func_get_args());
 		}
 
 		$options += ['minify' => TRUE, 'reset' => FALSE];
@@ -170,8 +170,12 @@ trait QueryTrait
 		return $DOMNodeList;
 	}
 
-	public function getJson ()
+	public function getJson ($options = [], $useCache = TRUE)
 	{
+		if (!isset($this->json) || !empty($options) || empty($useCache)) {
+			$this->json = $this->processJson(NULL, $options);
+		}
+
 		return $this->json;
 	}
 
@@ -205,7 +209,7 @@ trait QueryTrait
 	public function queryJson ($document = NULL, $selector = NULL, $options = [])
 	{
 		if (func_num_args() > 0 && func_num_args() < 3) {
-			list($document, $selector, $options) = $this->normalizeQueryArgs(func_get_args());
+			[$document, $selector, $options] = $this->normalizeQueryArgs(func_get_args());
 		}
 
 		$options += ['reset' => FALSE];
