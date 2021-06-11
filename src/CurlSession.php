@@ -13,13 +13,15 @@ class CurlSession extends CurlBrowser
 	protected $ch;
 	protected $pos;
 	protected $options;
+	protected $persistentOptions = [];
 
-	public function __construct ($curlOptions = [])
+	public function __construct ($curlOptions = [], $persistentOptions = [])
 	{
 		$curlOptions += [CURLOPT_USERAGENT => $this->userAgents[array_rand($this->userAgents)]];
 		$this->setCurlOptions($curlOptions);
-		$this->cookies = new CookieJar();
-		$this->options = new CurlBrowserOptions();
+		$this->cookies           = new CookieJar();
+		$this->options           = new CurlBrowserOptions();
+		$this->persistentOptions = $persistentOptions;
 	}
 
 	public function init ($url, $options = [])
@@ -46,7 +48,7 @@ class CurlSession extends CurlBrowser
 			$options['curl'][CURLOPT_COOKIE] = $cookies;
 		}
 
-		$this->options->setAll($options);
+		$this->options->setAll($options + $this->persistentOptions);
 
 		$curlOptions = $this->getCurlOptions($this->options->get('curl', []));
 
@@ -63,6 +65,7 @@ class CurlSession extends CurlBrowser
 
 	public function exec ($close = TRUE)
 	{
+		$this->json     = NULL;
 		$this->response = !is_int($this->pos) ? curl_exec($this->ch) : curl_multi_getcontent($this->ch);
 
 		if ($this->options->get('minify', FALSE)) {
