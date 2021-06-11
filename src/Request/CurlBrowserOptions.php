@@ -145,7 +145,7 @@ class CurlBrowserOptions
 				break;
 		}
 
-		$this->options['method']                   = 'post';
+		$this->options['method']                   = $this->options['method'] ?? $this->options['action'] ?? 'post';
 		$this->options['curl'][CURLOPT_POSTFIELDS] = $body;
 	}
 
@@ -171,7 +171,7 @@ class CurlBrowserOptions
 		$remove = [];
 
 		foreach ($this->requestHeaders as $index => $header) {
-			list($name, $value) = explode(':', $header);
+			[$name, $value] = explode(':', $header);
 			if (strtolower($name) === strtolower($key)) {
 				$remove[] = $header;
 			}

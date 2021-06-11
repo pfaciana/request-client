@@ -59,7 +59,6 @@ class OptionsTest extends \Codeception\Test\Unit
 		$this->assertEquals(1, $curl[CURLOPT_PUT], 'Method: PUT');
 	}
 
-
 	public function testSetQuery ()
 	{
 		$browserOptions = ['url' => 'https://example-url.com/?a=1&b=two#hash', 'query' => 'b=2&c=3'];
@@ -145,6 +144,16 @@ class OptionsTest extends \Codeception\Test\Unit
 		$this->assertEquals('{"ee":55,"ff":"66"}', $curl[CURLOPT_POSTFIELDS], 'Post Fields');
 		$this->assertFalse(in_array('Content-Type: application/x-www-form-urlencoded', $curl[CURLOPT_HTTPHEADER]), 'application/x-www-form-urlencoded');
 		$this->assertTrue(in_array('Content-Type: application/json', $curl[CURLOPT_HTTPHEADER]), 'application/json');
+
+
+		$browserOptions = ['action' => 'Delete', 'body' => ['a' => 1, 'b' => '2']];
+
+		$options = new CurlBrowserOptions($browserOptions);
+
+		$normalizedBrowserOptions = $options->getAll();
+		$this->assertEquals(['curl'], array_keys($normalizedBrowserOptions), 'match keys');
+		$curl = $normalizedBrowserOptions['curl'];
+		$this->assertEquals('DELETE', $curl[CURLOPT_CUSTOMREQUEST], 'Method: DELETE');
 	}
 
 	public function testSetHeaders ()
