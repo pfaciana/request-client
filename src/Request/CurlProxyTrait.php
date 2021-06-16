@@ -22,6 +22,46 @@ trait CurlProxyTrait
 	];
 	protected $torClient;
 
+	/**
+	 * Configure the Proxy
+	 *
+	 * <code>
+	 * $proxy->setCurlProxy([
+	 *   'proxy' => [
+	 *     'type'    => 'tor',
+	 *     'control' => [
+	 *       'password'   => 'some-password',
+	 *       'country'    => ['US', 'CA', 'CH'],
+	 *       'dynamicIP'  => TRUE,
+	 *       'validateIP' => TRUE,
+	 *     ],
+	 *   ],
+	 * ]);
+	 * </code>
+	 *
+	 * @param string|array $settings    {
+	 *                                  If settings is a string it will save it's value to the $type key
+	 * @type string        $type        Type of proxy to connect to. Available options: `tor`|`apify`|`nordvpn`
+	 * @type string        $host        Proxy IP/url address to connect to
+	 * @type string        $port        Proxy port to connect through
+	 * @type string        $username    Username to connect with. Required for `apify`|`nordvpn`
+	 * @type string        $password    Password to connect with. Required for `apify`|`nordvpn`
+	 * @type string        $restart     Whether to first restart the local proxy. Used with `tor`
+	 * @type string        $control     {
+	 * @type string        $host        IP/url address to connect to local client. Used with `tor`
+	 * @type string        $port        Port the local client is on. Used with `tor`
+	 * @type string        $password    Password to connect to the local client. Used with `tor`
+	 * @type string        $country     Country to run the ExitNode out of. Short for ['config']['ExitNodes']. Used with `tor`
+	 * @type string        $dynamicIP   Tell the client proxy to get a new IP address to exit from. Used with `tor`
+	 * @type string        $validateIP  Check to make sure the current IP address is coming from one of the available countries defined in the client proxy config. Used with `tor`
+	 * @type string        $config      {
+	 * @type string        $ExitNodes   `ExitNodes` setting defined in the client proxy config. Used with `tor`
+	 * @type string        $StrictNodes `StrictNodes` setting defined in the client proxy config. Used with `tor`
+	 *                                  }
+	 *                                  }
+	 *                                  }
+	 * @return bool|null Whether the settings were applied successfully or null on no settings were passed
+	 */
 	public function setCurlProxy ($settings)
 	{
 		if (empty($settings)) {
@@ -90,6 +130,24 @@ trait CurlProxyTrait
 		return TRUE;
 	}
 
+	/**
+	 * Normalize an array or string of countries to used used in tor's `ExitNodes` setting.
+	 *
+	 * <code>
+	 * // As array
+	 * $exitNodes = $proxy->normalizeTorExitNodes(['US', 'CA', 'CH']);
+	 * $exitNodes = $proxy->normalizeTorExitNodes(['{us}', '{ca}', '{ch}']);
+	 * </code>
+	 *
+	 * <code>
+	 * // As string
+	 * $exitNodes = $proxy->normalizeTorExitNodes('US,CA,CH']);
+	 * $exitNodes = $proxy->normalizeTorExitNodes('{us},{ca},{ch}']);
+	 * </code>
+	 *
+	 * @param string|array $nodes An array or string representing the countries to use in tor's `ExitNodes` setting
+	 * @return string The value to save to tor's `ExitNodes`
+	 */
 	public function normalizeTorExitNodes ($nodes)
 	{
 		if (empty($nodes)) {
@@ -107,6 +165,23 @@ trait CurlProxyTrait
 		return implode(',', $nodes);
 	}
 
+	/**
+	 * Configuration to set in tor's client settings
+	 *
+	 * @param array $config      {
+	 * @type string $host        IP/url address to connect to local client. Used with `tor`
+	 * @type string $port        Port the local client is on. Used with `tor`
+	 * @type string $password    Password to connect to the local client. Used with `tor`
+	 * @type string $country     Country to run the ExitNode out of. Short for ['config']['ExitNodes']. Used with `tor`
+	 * @type string $dynamicIP   Tell the client proxy to get a new IP address to exit from. Used with `tor`
+	 * @type string $validateIP  Check to make sure the current IP address is coming from one of the available countries defined in the client proxy config. Used with `tor`
+	 * @type string $config      {
+	 * @type string $ExitNodes   `ExitNodes` setting defined in the client proxy config. Used with `tor`
+	 * @type string $StrictNodes `StrictNodes` setting defined in the client proxy config. Used with `tor`
+	 *                           }
+	 *                           }
+	 * @return bool|\Dapphp\TorUtils\ControlClient The tor client on success, and `false` on failure
+	 */
 	public function setTorClient ($config = [])
 	{
 		// This will persist the `host`, `port` and `password` for future calls
@@ -141,6 +216,11 @@ trait CurlProxyTrait
 		return $this->torClient;
 	}
 
+	/**
+	 * Change IP of the tor ExitNode currently being used
+	 *
+	 * @return bool Returns `true` on success, `false` on failure/tor client does not exist
+	 */
 	public function getNewExitNode ()
 	{
 		if (empty($this->torClient)) {
@@ -150,8 +230,13 @@ trait CurlProxyTrait
 		$countries = $this->torClient->getConf('ExitNodes')['ExitNodes'];
 		$this->torClient->setConf(['ExitNodes' => $countries . ',' . $countries]);
 		$this->torClient->setConf(['ExitNodes' => $countries]);
+
+		return TRUE;
 	}
 
+	/**
+	 * Connect to the tor control client
+	 */
 	public function connectToTorClient ()
 	{
 		$this->torClient = new \Dapphp\TorUtils\ControlClient();
@@ -161,6 +246,12 @@ trait CurlProxyTrait
 		}
 	}
 
+	/**
+	 * Verify the ExitNode currently being used is, in fact, existing from the correct country
+	 *
+	 * @param int $attempts Number of attempts to reconnect to exit ouf of the correct country. Defaults to 30
+	 * @return bool Returns `true` if valid, and `false` if not valid
+	 */
 	public function validateExitNode ($attempts = 30)
 	{
 		if (empty($this->torClient)) {
@@ -191,6 +282,11 @@ trait CurlProxyTrait
 		return TRUE;
 	}
 
+	/**
+	 * Get the current connection to the tor control client
+	 *
+	 * @return null|\Dapphp\TorUtils\ControlClient The tor client, or `null` if does not exist.
+	 */
 	public function getTorClient ()
 	{
 		if (!empty(func_get_args())) {
@@ -203,6 +299,9 @@ trait CurlProxyTrait
 		return $this->torClient ?: NULL;
 	}
 
+	/**
+	 * Reset the Proxy back to the original settings once the connection is closed
+	 */
 	public function resetProxy ()
 	{
 		if (!empty($this->torClient) && !empty($this->origTorClientConfig)) {
