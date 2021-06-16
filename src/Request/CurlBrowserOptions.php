@@ -24,6 +24,11 @@ class CurlBrowserOptions
 		$this->setAll($options);
 	}
 
+	public function __destruct ()
+	{
+		$this->resetProxy();
+	}
+
 	public function isValid ()
 	{
 		return $this->isValid;

@@ -106,6 +106,11 @@ class CurlSession extends CurlBrowser
 		return $this->ch;
 	}
 
+	public function getTorClient ()
+	{
+		return $this->options->getTorClient(...func_get_args());
+	}
+
 	public function close ()
 	{
 		curl_close($this->ch);

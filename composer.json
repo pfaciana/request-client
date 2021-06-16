@@ -32,6 +32,7 @@
 		"ext-json": "*",
 		"ext-tidy": "*",
 		"ext-libxml": "*",
+		"dapphp/torutils": "^1.15",
 		"jakeasmith/http_build_url": "^1.0",
 		"mtdowling/jmespath.php": "^2.6",
 		"pfaciana/tiny-html-minifier": "^3.0",

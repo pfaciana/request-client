@@ -219,6 +219,7 @@ class OptionsTest extends \Codeception\Test\Unit
 		$this->assertEquals('https://localhost:9000', $curl[CURLOPT_PROXY], '$curlOptions: CURLOPT_PROXY');
 		$this->assertEquals(CURLPROXY_SOCKS5_HOSTNAME, $curl[CURLOPT_PROXYTYPE], '$curlOptions: CURLOPT_PROXYTYPE');
 
+		$this->assertEquals('{us},{CH}', $options->normalizeTorExitNodes(['us', '{CH']), 'normalize tor nodes');
 
 		$options->set('proxy', ['type' => 'apify', 'password' => 'password123']);
 
