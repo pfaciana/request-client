@@ -60,7 +60,7 @@ trait CurlProxyTrait
 	 *                                  }
 	 *                                  }
 	 *                                  }
-	 * @return bool|null Whether the settings were applied successfully or null on no settings were passed
+	 * @return bool|null Whether the settings were applied successfully, or `null` if settings were empty or not passed
 	 */
 	public function setCurlProxy ($settings)
 	{
