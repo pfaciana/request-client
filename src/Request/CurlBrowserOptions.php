@@ -9,6 +9,7 @@ class CurlBrowserOptions
 	use CurlProxyTrait;
 
 	protected $options = [];
+	protected $isValid = TRUE;
 	protected $requestHeaders = [
 		"Connection: keep-alive",
 		"Keep-Alive: 300",
@@ -23,6 +24,11 @@ class CurlBrowserOptions
 		$this->setAll($options);
 	}
 
+	public function isValid ()
+	{
+		return $this->isValid;
+	}
+
 	public function get ($key, $default = NULL)
 	{
 		return array_key_exists($key, $this->options) ? $this->options[$key] : $default;
@@ -32,18 +38,21 @@ class CurlBrowserOptions
 	{
 		$this->options[$key] = $value;
 		$this->normalizeOptions();
+
+		return $this->isValid();
 	}
 
 	public function getAll ()
 	{
 		return $this->options;
-
 	}
 
 	public function setAll ($options = [])
 	{
 		$this->options = $options;
 		$this->normalizeOptions();
+
+		return $this->isValid();
 	}
 
 	protected function normalizeOptions ()
@@ -155,8 +164,12 @@ class CurlBrowserOptions
 			return;
 		}
 
-		$this->setCurlProxy($this->options['proxy']);
+		$proxy = $this->options['proxy'];
 		unset($this->options['proxy']);
+
+		if (is_bool($isValid = $this->setCurlProxy($proxy))) {
+			$this->isValid = $isValid;
+		}
 	}
 
 	protected function setHeaders ()

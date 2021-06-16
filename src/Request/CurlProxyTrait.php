@@ -18,7 +18,7 @@ trait CurlProxyTrait
 	public function setCurlProxy ($settings)
 	{
 		if (empty($settings)) {
-			return;
+			return NULL;
 		}
 
 		foreach ($this->curlProxyKeys as $proxyKey) {
@@ -61,15 +61,17 @@ trait CurlProxyTrait
 			 */
 			$settings += ['host' => 'us.socks.nordhold.net', 'port' => '1080'];
 
-			$this->options['curl'] = [
-					CURLOPT_HTTPPROXYTUNNEL => 1,
-					CURLOPT_PROXY           => $settings['host'],
-					CURLOPT_PROXYPORT       => $settings['port'],
-					CURLOPT_PROXYUSERPWD    => $settings['username'] . ':' . $settings['password'],
-					CURLOPT_PROXYTYPE       => CURLPROXY_SOCKS5,
-					CURLOPT_PROXYAUTH       => CURLAUTH_BASIC,
-				] + $this->options['curl'];
+			$this->options['curl'] += [
+				CURLOPT_HTTPPROXYTUNNEL => 1,
+				CURLOPT_PROXY           => $settings['host'],
+				CURLOPT_PROXYPORT       => $settings['port'],
+				CURLOPT_PROXYUSERPWD    => $settings['username'] . ':' . $settings['password'],
+				CURLOPT_PROXYTYPE       => CURLPROXY_SOCKS5,
+				CURLOPT_PROXYAUTH       => CURLAUTH_BASIC,
+			];
 		}
+
+		return TRUE;
 	}
 
 }
