@@ -54,4 +54,17 @@ trait EnvironmentTrait
 
 		return trim(exec(trim("{$wsl} {$torify} curl ifconfig.me 2>&1")));
 	}
+
+	public function getLocation ($key = 'country', $ip = NULL, $skipTor = FALSE)
+	{
+		$torify  = !$skipTor && $this->isTorEnabled() ? 'torify' : '';
+		$wsl     = $this->isWindows() ? 'wsl' : '';
+		$command = "{$wsl} {$torify} curl -s ipinfo.io";
+		!empty($ip) && ($command .= "/{$ip}");
+
+		$response = json_decode(shell_exec(trim("{$command} 2>&1")), TRUE);
+
+		return is_string($key) && !empty($key) ? (array_key_exists($key, $response) ? $response[$key] : FALSE) : $response;
+
+	}
 }
