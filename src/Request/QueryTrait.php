@@ -83,6 +83,10 @@ trait QueryTrait
 
 	protected function processQp ($qp = NULL, $selector = NULL, $options = [])
 	{
+		if (!is_array($options)) {
+			$options = [];
+		}
+
 		if (isset($options['use_parser']) && $options['use_parser'] === 'xml') {
 			return qp($qp, $selector, $options);
 		}

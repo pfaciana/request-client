@@ -77,6 +77,10 @@ class CurlSession extends CurlBrowser
 			$this->minifyResponse();
 		}
 
+		if (!empty($qpOptions = $this->options->get('setQp', TRUE))) {
+			$this->setQp($this->response, $qpOptions);
+		}
+
 		$this->getInfo = curl_getinfo($this->ch);
 
 		$this->url = !empty($this->getInfo['url']) ? $this->getInfo['url'] : $this->url;
