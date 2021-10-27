@@ -15,6 +15,7 @@ class CurlSession extends CurlBrowser
 	protected $options;
 	protected $optionsSet;
 	protected $persistentOptions = [];
+	protected $requestCount = 0;
 
 	public function __construct ($curlOptions = [], $persistentOptions = [])
 	{
@@ -70,6 +71,14 @@ class CurlSession extends CurlBrowser
 			return FALSE;
 		}
 
+		$this->requestCount++;
+
+		if (!empty($proxy = $this->options->getProxySettings()) && is_array($proxy) && array_key_exists('type', $proxy)) {
+			if ($proxy['type'] === 'tor' && $this->isTorEnabled()) {
+				$this->countTorNodeRequest();
+			}
+		}
+
 		$this->json     = NULL;
 		$this->response = !is_int($this->pos) ? curl_exec($this->ch) : curl_multi_getcontent($this->ch);
 
@@ -98,6 +107,11 @@ class CurlSession extends CurlBrowser
 		$close && $this->close();
 
 		return $this->response;
+	}
+
+	public function getRequestCount ()
+	{
+		return $this->requestCount;
 	}
 
 	public function getPosition ()
