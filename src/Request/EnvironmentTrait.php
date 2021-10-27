@@ -43,9 +43,26 @@ trait EnvironmentTrait
 		$output = shell_exec(($this->isWindows() ? 'wsl ' : '') . 'sudo service tor restart');
 		sleep($sleep);
 
+		$this->resetTorNodeRequestCount();
+
 		$torRestartedAt = $this->torRestartedAt = time();
 
 		return $output;
+	}
+
+	/**
+	 * Attempts to start the local tor service, if it's diabled
+	 *
+	 * @param int $sleep Seconds to pause after start
+	 * @return string The command line output of the restart command
+	 */
+	public function startTor ($sleep = 1)
+	{
+		if (!$this->isTorEnabled()) {
+			return $this->restartTor($sleep);
+		}
+
+		return 'Tor is already enabled.';
 	}
 
 	/**
@@ -69,6 +86,43 @@ trait EnvironmentTrait
 		}
 
 		return TRUE;
+	}
+
+	/**
+	 * Retrieves how many times the same exit node has been used during the current tor session
+	 *
+	 * @return int number of requests
+	 */
+	public function getTorNodeRequestCount ()
+	{
+		global $torNodeRequestCount;
+
+		return $torNodeRequestCount ?: 0;
+	}
+
+	/**
+	 * Resets the tor request count back to zero.
+	 * Used after tor has been restarted the tor client has been updated with new exit nodes
+	 *
+	 * @return int number of requests
+	 */
+	protected function resetTorNodeRequestCount ()
+	{
+		global $torNodeRequestCount;
+
+		return $torNodeRequestCount = 0;
+	}
+
+	/**
+	 * Count everytime a request is made using tor for the same exit node
+	 *
+	 * @return int number of requests
+	 */
+	protected function countTorNodeRequest ()
+	{
+		global $torNodeRequestCount;
+
+		return ++$torNodeRequestCount;
 	}
 
 	/**

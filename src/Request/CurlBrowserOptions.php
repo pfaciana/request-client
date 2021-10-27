@@ -10,6 +10,7 @@ class CurlBrowserOptions
 
 	protected $options = [];
 	protected $isValid = TRUE;
+	protected $proxySettings = [];
 	protected $requestHeaders = [
 		"Connection: keep-alive",
 		"Keep-Alive: 300",
@@ -32,6 +33,11 @@ class CurlBrowserOptions
 	public function isValid ()
 	{
 		return $this->isValid;
+	}
+
+	public function getProxySettings ()
+	{
+		return $this->proxySettings;
 	}
 
 	public function get ($key, $default = NULL)
@@ -172,8 +178,13 @@ class CurlBrowserOptions
 		$proxy = $this->options['proxy'];
 		unset($this->options['proxy']);
 
-		if (is_bool($isValid = $this->setCurlProxy($proxy))) {
-			$this->isValid = $isValid;
+		if (!empty($proxy = $this->setCurlProxy($proxy)) && is_array($proxy)) {
+			$this->proxySettings = $proxy;
+			$this->isValid       = TRUE;
+		}
+		else {
+			$this->proxySettings = [];
+			$this->isValid       = is_bool($proxy) ? $proxy : $this->isValid;
 		}
 	}
 

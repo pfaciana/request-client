@@ -29,6 +29,7 @@ trait CurlProxyTrait
 	 * $proxy->setCurlProxy([
 	 *   'proxy' => [
 	 *     'type'    => 'tor',
+	 *     'restart' => TRUE,
 	 *     'control' => [
 	 *       'password'   => 'some-password',
 	 *       'country'    => ['US', 'CA', 'CH'],
@@ -47,6 +48,7 @@ trait CurlProxyTrait
 	 * @type string        $username    Username to connect with. Required for `apify`|`nordvpn`
 	 * @type string        $password    Password to connect with. Required for `apify`|`nordvpn`
 	 * @type string        $restart     Whether to first restart the local proxy. Used with `tor`
+	 * @type string        $passive     Will prevent auto force starting of the proxy, if the proxy is disabled. Used with `tor`
 	 * @type string        $control     {
 	 * @type string        $host        IP/url address to connect to local client. Used with `tor`
 	 * @type string        $port        Port the local client is on. Used with `tor`
@@ -74,25 +76,37 @@ trait CurlProxyTrait
 
 		$settings = is_string($settings) ? ['type' => $settings] : $settings;
 
-		if ($settings['type'] === 'tor' && $this->isTorEnabled()) {
-			$settings += ['host' => '127.0.0.1', 'port' => '9050'];
-
-			$this->options['curl'] = [
-					CURLOPT_HTTPPROXYTUNNEL => 1,
-					CURLOPT_PROXY           => $settings['host'] . ':' . $settings['port'],
-					CURLOPT_PROXYTYPE       => CURLPROXY_SOCKS5_HOSTNAME,
-				] + $this->options['curl'];
-
-			if (!empty($settings['restart'])) {
-				$this->restartTor();
+		if ($settings['type'] === 'tor') {
+			if (!array_key_exists('passive', $settings) || empty($settings['passive'])) {
+				$this->startTor();
 			}
-			if (!empty($settings['restart']) || $this->hasTorBeenRestarted()) {
-				$this->torClient = NULL;
-			}
+			if ($this->isTorEnabled()) {
+				$settings += ['host' => '127.0.0.1', 'port' => '9050'];
 
-			if (!empty($settings['control'])) {
-				if (!$this->setTorClient($settings['control'])) {
-					return FALSE;
+				$this->options['curl'] = [
+						CURLOPT_HTTPPROXYTUNNEL => 1,
+						CURLOPT_PROXY           => $settings['host'] . ':' . $settings['port'],
+						CURLOPT_PROXYTYPE       => CURLPROXY_SOCKS5_HOSTNAME,
+					] + $this->options['curl'];
+
+				if (!empty($settings['restart'])) {
+					if ($settings['restart'] > 1) {
+						if (empty($this->getTorNodeRequestCount()) || $this->getTorNodeRequestCount() >= $settings['restart']) {
+							$this->restartTor();
+						}
+					}
+					else {
+						$this->restartTor();
+					}
+				}
+				if (!empty($settings['restart']) || $this->hasTorBeenRestarted()) {
+					$this->torClient = NULL;
+				}
+
+				if (!empty($settings['control'])) {
+					if (!$this->setTorClient($settings['control'])) {
+						return FALSE;
+					}
 				}
 			}
 		}
@@ -127,7 +141,7 @@ trait CurlProxyTrait
 			];
 		}
 
-		return TRUE;
+		return $settings;
 	}
 
 	/**
@@ -197,13 +211,28 @@ trait CurlProxyTrait
 		}
 		// This is a little trick to get a new IP, but still keep the exit nodes the same
 		// Otherwise if you reset the ExitNodes to the exact same value, it won't trigger a node (or IP) change
-		if (!empty($config['dynamicIP'])) {
-			$this->getNewExitNode();
+		if (!empty($config['dynamicIP']) && (empty($config['config']) || !array_key_exists('ExitNodes', $config['config']) || empty($config['config']['ExitNodes']))) {
+			if ($config['dynamicIP'] > 1) {
+				if (empty($this->getTorNodeRequestCount()) || $this->getTorNodeRequestCount() >= $config['dynamicIP']) {
+					$this->getNewExitNode();
+				}
+			}
+			else {
+				$this->getNewExitNode();
+			}
 		}
 		if (!empty($config['config'])) {
 			$this->origTorClientConfig += $this->torClient->getConf(implode(' ', array_keys($config['config'])));
 			if (array_key_exists('ExitNodes', $config['config']) && !empty($config['config']['ExitNodes'])) {
 				$config['config']['ExitNodes'] = $this->normalizeTorExitNodes($config['config']['ExitNodes']);
+				if (!empty($config['dynamicIP']) && $config['dynamicIP'] > 1) {
+					if (empty($this->getTorNodeRequestCount()) || $this->getTorNodeRequestCount() >= $config['dynamicIP']) {
+						$this->getNewExitNode();
+					}
+				}
+				else {
+					$this->getNewExitNode();
+				}
 			}
 			$this->torClient->setConf($config['config']);
 		}
@@ -230,6 +259,8 @@ trait CurlProxyTrait
 		$countries = $this->torClient->getConf('ExitNodes')['ExitNodes'];
 		$this->torClient->setConf(['ExitNodes' => $countries . ',' . $countries]);
 		$this->torClient->setConf(['ExitNodes' => $countries]);
+
+		$this->resetTorNodeRequestCount();
 
 		return TRUE;
 	}
@@ -306,6 +337,7 @@ trait CurlProxyTrait
 	{
 		if (!empty($this->torClient) && !empty($this->origTorClientConfig)) {
 			$this->torClient->setConf($this->origTorClientConfig);
+			$this->resetTorNodeRequestCount();
 		}
 	}
 }
