@@ -131,6 +131,10 @@ trait CurlProxyTrait
 			 */
 			$settings += ['host' => 'us.socks.nordhold.net', 'port' => '1080'];
 
+			if (is_array($settings['host'])) {
+				$settings['host'] = $settings['host'][array_rand($settings['host'])];
+			}
+
 			$this->options['curl'] += [
 				CURLOPT_HTTPPROXYTUNNEL => 1,
 				CURLOPT_PROXY           => $settings['host'],
