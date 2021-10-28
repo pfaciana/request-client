@@ -23,6 +23,12 @@ class Curl extends CurlSession
 {
 	public function request ($url, $options = [])
 	{
-		return $this->init($url, $options)->exec();
+		$options['retry'] = array_key_exists('retry', $options) && is_int($options['retry']) && $options['retry'] > 0 ? $options['retry'] : 0;
+
+		do {
+			$response = $this->init($url, $options)->exec();
+		} while ($this->requestFailed() && $options['retry']-- > 0 && !sleep($options['retryDelay'] ??= 3));
+
+		return $response;
 	}
 }
