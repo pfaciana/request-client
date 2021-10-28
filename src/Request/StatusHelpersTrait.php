@@ -6,6 +6,8 @@ namespace RequestClient\Request;
 
 trait StatusHelpersTrait
 {
+	// Comment to fix AspectMock bug
+
 	public function getThrottle ()
 	{
 		return $this->throttle;
