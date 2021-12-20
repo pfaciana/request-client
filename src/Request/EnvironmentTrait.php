@@ -56,7 +56,7 @@ trait EnvironmentTrait
 	 * @param int $sleep Seconds to pause after start
 	 * @return string The command line output of the restart command
 	 */
-	public function startTor ($sleep = 1)
+	public function startTor ($sleep = 3)
 	{
 		if (!$this->isTorEnabled()) {
 			return $this->restartTor($sleep);
