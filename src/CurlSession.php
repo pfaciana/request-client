@@ -50,6 +50,8 @@ class CurlSession extends CurlBrowser
 			$options['curl'][CURLOPT_COOKIE] = $cookies;
 		}
 
+		$options['prevStatus'] = $this->requestSucceeded() ? TRUE : ($this->requestFailed() ? FALSE : NULL);
+
 		$this->optionsSet = $this->options->setAll(array_replace_recursive($this->persistentOptions, $options));
 
 		$curlOptions = $this->getCurlOptions($this->options->get('curl', []));

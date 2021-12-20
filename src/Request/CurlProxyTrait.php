@@ -104,6 +104,7 @@ trait CurlProxyTrait
 				}
 
 				if (!empty($settings['control'])) {
+					$settings['control']['prevStatus'] = $settings['prevStatus'] ?? NULL;
 					if (!$this->setTorClient($settings['control'])) {
 						return FALSE;
 					}
@@ -213,9 +214,12 @@ trait CurlProxyTrait
 			$config['config']['ExitNodes'] = $config['country'];
 			unset($config['country']);
 		}
+		if (array_key_exists('prevStatus', $config) && $config['prevStatus'] === FALSE) {
+			$this->getNewExitNode();
+		}
 		// This is a little trick to get a new IP, but still keep the exit nodes the same
 		// Otherwise if you reset the ExitNodes to the exact same value, it won't trigger a node (or IP) change
-		if (!empty($config['dynamicIP']) && (empty($config['config']) || !array_key_exists('ExitNodes', $config['config']) || empty($config['config']['ExitNodes']))) {
+		elseif (!empty($config['dynamicIP']) && (empty($config['config']) || !array_key_exists('ExitNodes', $config['config']) || empty($config['config']['ExitNodes']))) {
 			if ($config['dynamicIP'] > 1) {
 				if (empty($this->getTorNodeRequestCount()) || $this->getTorNodeRequestCount() >= $config['dynamicIP']) {
 					$this->getNewExitNode();
@@ -260,7 +264,7 @@ trait CurlProxyTrait
 			return FALSE;
 		}
 
-		$countries = $this->torClient->getConf('ExitNodes')['ExitNodes'];
+		$countries = (@$this->torClient->getConf('ExitNodes') ?: ['ExitNodes' => '{US}'])['ExitNodes'];
 		$this->torClient->setConf(['ExitNodes' => $countries . ',' . $countries]);
 		$this->torClient->setConf(['ExitNodes' => $countries]);
 

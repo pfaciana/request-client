@@ -178,6 +178,10 @@ class CurlBrowserOptions
 		$proxy = $this->options['proxy'];
 		unset($this->options['proxy']);
 
+		$proxy = is_string($proxy) ? ['type' => $proxy] : $proxy;
+
+		$proxy['prevStatus'] = $this->options['prevStatus'] ?? NULL;
+
 		if (!empty($proxy = $this->setCurlProxy($proxy)) && is_array($proxy)) {
 			$this->proxySettings = $proxy;
 			$this->isValid       = TRUE;
