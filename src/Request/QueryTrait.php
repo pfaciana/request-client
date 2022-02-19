@@ -91,7 +91,7 @@ trait QueryTrait
 			return qp($qp, $selector, $options);
 		}
 
-		if (function_exists('tidy_repair_string') && is_string($qp)) {
+		if ((!isset($options['repair_document']) || $options['repair_document']) && function_exists('tidy_repair_string') && is_string($qp)) {
 			$qp = tidy_repair_string($qp);
 		}
 
